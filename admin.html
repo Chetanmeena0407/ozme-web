@@ -59,7 +59,6 @@ button:hover { background:#4e46d3; }
 <!-- 🔧 ADMIN CONTROLS -->
 <div id="adminBox" class="hidden">
 
-  <!-- ADD BATCH -->
   <div class="card">
     <h2>Add Batch</h2>
     <input id="bid" placeholder="Batch ID (batch1)">
@@ -68,16 +67,14 @@ button:hover { background:#4e46d3; }
     <button onclick="addBatch()">Add Batch</button>
   </div>
 
-  <!-- ADD SUBJECT -->
   <div class="card">
     <h2>Add Subject</h2>
-    <input id="sbatch" placeholder="Batch ID (batch1)">
-    <input id="sid" placeholder="Subject ID (physics)">
+    <input id="sbatch" placeholder="Batch ID">
+    <input id="sid" placeholder="Subject ID">
     <input id="sname" placeholder="Subject Name">
     <button onclick="addSubject()">Add Subject</button>
   </div>
 
-  <!-- ADD CHAPTER -->
   <div class="card">
     <h2>Add Chapter</h2>
     <input id="cbatch" placeholder="Batch ID">
@@ -87,9 +84,8 @@ button:hover { background:#4e46d3; }
     <button onclick="addChapter()">Add Chapter</button>
   </div>
 
-  <!-- ADD LECTURE -->
   <div class="card">
-    <h2>Add Lecture (Links only)</h2>
+    <h2>Add Lecture</h2>
     <input id="lbatch" placeholder="Batch ID">
     <input id="lsubject" placeholder="Subject ID">
     <input id="lchapter" placeholder="Chapter ID">
@@ -105,25 +101,45 @@ button:hover { background:#4e46d3; }
 <!-- 🔥 FIREBASE LOGIC -->
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { signInWithEmailAndPassword, onAuthStateChanged } 
-  from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-import { ref, set, push } 
-  from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+import {
+  ref, get, set, push
+} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-const loginBox = document.getElementById("loginBox");
-const adminBox = document.getElementById("adminBox");
-
+/* 🔐 LOGIN */
 window.login = async () => {
-  await signInWithEmailAndPassword(auth, email.value, password.value);
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      email.value.trim(),
+      password.value.trim()
+    );
+  } catch (err) {
+    alert("Login Error ❌ : " + err.message);
+  }
 };
 
-onAuthStateChanged(auth, user => {
-  if (user) {
+/* 🔐 ADMIN CHECK */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  const safeEmail = user.email.replace(/\./g, "_");
+  const snap = await get(ref(db, "admins/" + safeEmail));
+
+  if (snap.exists()) {
     loginBox.style.display = "none";
     adminBox.classList.remove("hidden");
+  } else {
+    alert("Access Denied ❌ You are not admin");
+    await signOut(auth);
   }
 });
 
+/* ➕ ADD DATA */
 window.addBatch = async () => {
   await set(ref(db, "batches/" + bid.value), {
     batchName: bname.value,
