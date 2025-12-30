@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OZME Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#0f111a;
+  color:#fff;
+  margin:0;
+  padding:20px;
+}
+h1,h2 { text-align:center; }
+.card {
+  background:#1c1f2b;
+  padding:20px;
+  border-radius:12px;
+  margin:20px auto;
+  max-width:500px;
+}
+input, button {
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:none;
+}
+input {
+  background:#0f111a;
+  color:#fff;
+  border:1px solid #333;
+}
+button {
+  background:#6c63ff;
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:hover { background:#4e46d3; }
+.hidden { display:none; }
+</style>
+</head>
+
+<body>
+
+<h1>OZME Admin Panel</h1>
+
+<!-- 🔐 LOGIN -->
+<div class="card" id="loginBox">
+  <h2>Admin Login</h2>
+  <input id="email" placeholder="Admin Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- 🔧 ADMIN CONTROLS -->
+<div id="adminBox" class="hidden">
+
+  <!-- ADD BATCH -->
+  <div class="card">
+    <h2>Add Batch</h2>
+    <input id="bid" placeholder="Batch ID (batch1)">
+    <input id="bname" placeholder="Batch Name">
+    <input id="bimg" placeholder="Image URL (optional)">
+    <button onclick="addBatch()">Add Batch</button>
+  </div>
+
+  <!-- ADD SUBJECT -->
+  <div class="card">
+    <h2>Add Subject</h2>
+    <input id="sbatch" placeholder="Batch ID (batch1)">
+    <input id="sid" placeholder="Subject ID (physics)">
+    <input id="sname" placeholder="Subject Name">
+    <button onclick="addSubject()">Add Subject</button>
+  </div>
+
+  <!-- ADD CHAPTER -->
+  <div class="card">
+    <h2>Add Chapter</h2>
+    <input id="cbatch" placeholder="Batch ID">
+    <input id="csubject" placeholder="Subject ID">
+    <input id="cid" placeholder="Chapter ID">
+    <input id="cname" placeholder="Chapter Name">
+    <button onclick="addChapter()">Add Chapter</button>
+  </div>
+
+  <!-- ADD LECTURE -->
+  <div class="card">
+    <h2>Add Lecture (Links only)</h2>
+    <input id="lbatch" placeholder="Batch ID">
+    <input id="lsubject" placeholder="Subject ID">
+    <input id="lchapter" placeholder="Chapter ID">
+    <input id="ltitle" placeholder="Lecture Title">
+    <input id="llec" placeholder="Lecture Link">
+    <input id="lnotes" placeholder="Notes Link">
+    <input id="ldpp" placeholder="DPP Link">
+    <button onclick="addLecture()">Add Lecture</button>
+  </div>
+
+</div>
+
+<!-- 🔥 FIREBASE LOGIC -->
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { signInWithEmailAndPassword, onAuthStateChanged } 
+  from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+import { ref, set, push } 
+  from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const loginBox = document.getElementById("loginBox");
+const adminBox = document.getElementById("adminBox");
+
+window.login = async () => {
+  await signInWithEmailAndPassword(auth, email.value, password.value);
+};
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginBox.style.display = "none";
+    adminBox.classList.remove("hidden");
+  }
+});
+
+window.addBatch = async () => {
+  await set(ref(db, "batches/" + bid.value), {
+    batchName: bname.value,
+    image: bimg.value || ""
+  });
+  alert("Batch Added ✅");
+};
+
+window.addSubject = async () => {
+  await set(ref(db, `subjects/${sbatch.value}/${sid.value}`), {
+    subjectName: sname.value
+  });
+  alert("Subject Added ✅");
+};
+
+window.addChapter = async () => {
+  await set(ref(db, `chapters/${cbatch.value}/${csubject.value}/${cid.value}`), {
+    chapterName: cname.value
+  });
+  alert("Chapter Added ✅");
+};
+
+window.addLecture = async () => {
+  await push(ref(db,
+    `lectures/${lbatch.value}/${lsubject.value}/${lchapter.value}`
+  ), {
+    title: ltitle.value,
+    lectureLink: llec.value,
+    notesLink: lnotes.value,
+    dppLink: ldpp.value,
+    time: Date.now()
+  });
+  alert("Lecture Added ✅");
+};
+</script>
+
+</body>
+</html>
