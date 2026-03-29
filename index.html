@@ -1,154 +1,155 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MCQ App</title>
+  <title>MCQ Dashboard</title>
 
   <style>
     body {
-      font-family: Arial;
-      background: #f5f7fb;
       margin: 0;
-      padding: 20px;
-    }
-
-    .card {
-      background: white;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-
-    button {
-      padding: 10px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #4facfe;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
       color: white;
-      cursor: pointer;
     }
+
+    /* NAVBAR */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 30px;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .logout {
+      background: #22c55e;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* MAIN */
+    .container {
+      padding: 20px 30px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 20px;
+    }
+
+    /* CARD */
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 25px;
+      text-align: center;
+      transition: 0.2s;
+      border: 1px solid #334155;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #4facfe;
+    }
+
+    .card h3 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .btn {
+      margin-top: 15px;
+      display: inline-block;
+      padding: 8px 14px;
+      background: #4facfe;
+      border-radius: 6px;
+      text-decoration: none;
+      color: white;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #007bff;
+    }
+
   </style>
 </head>
 
 <body>
 
-<h2>MCQ Dashboard</h2>
-
-<button onclick="logout()">Logout</button>
-
-<div class="card">
-  <h3 id="userEmail">Loading...</h3>
-  <p>Progress: <span id="progress">0</span>/100</p>
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="logo">MCQ Prep</div>
+  <div class="logout" onclick="logout()">Logout</div>
 </div>
 
-<div class="card">
-  <button onclick="startTest()">Start MCQ</button>
-</div>
+<!-- MAIN -->
+<div class="container">
 
-<div id="quiz" class="card"></div>
+  <h2>Select Subject</h2>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>Physics</h3>
+      <p>Practice Physics MCQs</p>
+      <a class="btn" href="physics.html">Let's Practice</a>
+    </div>
+
+    <div class="card">
+      <h3>Chemistry</h3>
+      <p>Practice Chemistry MCQs</p>
+      <a class="btn" href="chemistry.html">Let's Practice</a>
+    </div>
+
+    <div class="card">
+      <h3>Botany</h3>
+      <p>Practice Botany MCQs</p>
+      <a class="btn" href="botany.html">Let's Practice</a>
+    </div>
+
+    <div class="card">
+      <h3>Zoology</h3>
+      <p>Practice Zoology MCQs</p>
+      <a class="btn" href="zoology.html">Let's Practice</a>
+    </div>
+
+  </div>
+
+</div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script src="firebase.js"></script>
 
 <script>
-let questions = [];
-let current = 0;
-
-// 🔐 Login check
+// 🔐 LOGIN CHECK
 firebase.auth().onAuthStateChanged(function(user) {
   if (!user) {
     window.location.href = "login.html";
-  } else {
-    document.getElementById("userEmail").innerText = user.email;
-    loadProgress();
   }
 });
 
-// 📊 Progress load
-function loadProgress() {
-  let data = JSON.parse(localStorage.getItem("progress")) || {
-    date: new Date().toDateString(),
-    done: []
-  };
-
-  let today = new Date().toDateString();
-
-  if (data.date !== today) {
-    data = { date: today, done: [] };
-    localStorage.setItem("progress", JSON.stringify(data));
-  }
-
-  document.getElementById("progress").innerText = data.done.length;
-}
-
-// 🚀 Start test
-function startTest() {
-  db.collection("questions").get().then(snapshot => {
-    questions = [];
-    snapshot.forEach(doc => {
-      questions.push(doc.data());
-    });
-
-    current = 0;
-    showQuestion();
-  });
-}
-
-// 📚 Show question
-function showQuestion() {
-  let q = questions[current];
-
-  document.getElementById("quiz").innerHTML = `
-    <h3>${q.question}</h3>
-    ${q.options.map(opt =>
-      `<button onclick="answer('${opt}')">${opt}</button>`
-    ).join("<br><br>")}
-  `;
-}
-
-// 🔥 Progress update
-function updateProgress(index) {
-  let data = JSON.parse(localStorage.getItem("progress")) || {
-    date: new Date().toDateString(),
-    done: []
-  };
-
-  let today = new Date().toDateString();
-
-  if (data.date !== today) {
-    data = { date: today, done: [] };
-  }
-
-  if (data.done.includes(index)) {
-    data.done = []; // repeat → reset
-  } else {
-    data.done.push(index);
-  }
-
-  localStorage.setItem("progress", JSON.stringify(data));
-}
-
-// ✅ Answer
-function answer(opt) {
-  updateProgress(current);
-  loadProgress();
-
-  current++;
-
-  if (current < questions.length) {
-    showQuestion();
-  } else {
-    document.getElementById("quiz").innerHTML =
-      "<h2>Test Finished ✅</h2>";
-  }
-}
-
-// 🚪 Logout
+// 🚪 LOGOUT
 function logout() {
   firebase.auth().signOut().then(() => {
     window.location.href = "login.html";
