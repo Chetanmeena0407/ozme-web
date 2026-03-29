@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Login - MCQ App</title>
+
   <style>
     body {
       margin: 0;
@@ -35,10 +36,6 @@
       text-align: center;
     }
 
-    .left h1 {
-      margin-bottom: 10px;
-    }
-
     .right {
       flex: 1;
       padding: 40px;
@@ -64,11 +61,6 @@
       color: white;
       font-size: 15px;
       cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #007bff;
     }
 
     .secondary {
@@ -76,28 +68,22 @@
       color: #333;
     }
 
-    .secondary:hover {
-      background: #ddd;
-    }
-
     #msg {
       margin-top: 10px;
       font-size: 14px;
-      color: red;
     }
   </style>
 </head>
+
 <body>
 
 <div class="container">
 
-  <!-- LEFT SIDE -->
   <div class="left">
     <h1>MCQ Practice</h1>
-    <p>Prepare smarter with daily tests & premium questions 🚀</p>
+    <p>Prepare smarter with daily tests 🚀</p>
   </div>
 
-  <!-- RIGHT SIDE -->
   <div class="right">
     <h2>Login / Signup</h2>
 
@@ -120,23 +106,35 @@
 <script src="firebase.js"></script>
 
 <script>
+const msg = document.getElementById("msg");
+
+// 🔥 SIGNUP (FIXED)
 function signup() {
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
 
   firebase.auth().createUserWithEmailAndPassword(email, pass)
     .then((userCred) => {
-      db.collection("users").doc(userCred.user.uid).set({
+
+      // 🔥 SAVE TO FIRESTORE
+      return db.collection("users").doc(userCred.user.uid).set({
         email: email,
         isPremium: false
       });
 
-      msg.style.color = "green";
-      msg.innerText = "Account Created ✅";
     })
-    .catch(err => msg.innerText = err.message);
+    .then(() => {
+      msg.style.color = "green";
+      msg.innerText = "Account Created + Saved ✅";
+    })
+    .catch(err => {
+      msg.style.color = "red";
+      msg.innerText = err.message;
+      console.log(err);
+    });
 }
 
+// 🔐 LOGIN
 function login() {
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
@@ -150,7 +148,10 @@ function login() {
         window.location.href = "index.html";
       }, 1000);
     })
-    .catch(err => msg.innerText = err.message);
+    .catch(err => {
+      msg.style.color = "red";
+      msg.innerText = err.message;
+    });
 }
 </script>
 
