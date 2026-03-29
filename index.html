@@ -1,178 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OZME Batches</title>
-
-<style>
-body { font-family: Arial, sans-serif; margin:0; padding:0; background:#0f111a; color:#fff; overflow-x:hidden; }
-
-#logoOverlay {
-  position: fixed; inset:0;
-  display:flex; justify-content:center; align-items:center; flex-direction: column;
-  background: radial-gradient(circle at center, #05060a 0%, #0b1220 100%);
-  z-index: 9999;
-}
-#logoOverlay h1 {
-  font-size: clamp(50px, 15vw, 120px);
-  font-weight: 900;
-  background: linear-gradient(90deg,#ff4760,#ff9f43,#1e90ff);
-  -webkit-background-clip:text;
-  color: transparent;
-  opacity:0;
-  transform: scale(0.3);
-  animation: showLogo 2.5s forwards;
-}
-#logoOverlay p { margin-top:20px; opacity:0; animation: fadeUp 1s 2.5s forwards; }
-
-@keyframes showLogo { to {opacity:1; transform:scale(1);} }
-@keyframes fadeUp { to {opacity:1;} }
-
-#batches { opacity:0; padding:20px; transition:1s; }
-h1 { text-align:center; }
-
-#searchBar {
-  display:block; margin:0 auto 20px;
-  padding:10px; width:80%; max-width:400px;
-  background:#1c1f2b; color:#fff;
-  border:2px solid #6c63ff; border-radius:8px;
-}
-
-.batch-container {
-  display:grid;
-  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-}
-
-.batch-card {
-  background:#1c1f2b;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 4px 12px rgba(0,0,0,.5);
-  transition:.3s;
-  position:relative;
-}
-.batch-card:hover { transform:translateY(-6px); }
-
-.batch-card img { width:100%; }
-
-.content { padding:15px; }
-.footer { padding:15px; text-align:center; }
-.footer a {
-  background:#6c63ff; color:#fff;
-  padding:10px 20px;
-  border-radius:10px;
-  text-decoration:none;
-}
-
-.fav-btn {
-  position:absolute; top:10px; right:10px;
-  background:#1c1f2b; border:none;
-  border-radius:50%; width:35px; height:35px;
-  font-size:18px; cursor:pointer;
-}
-.fav-btn.active { color:#ff6b6b; }
-</style>
+  <title>MCQ Test</title>
 </head>
-
 <body>
 
-<div id="logoOverlay">
-  <h1>OZME</h1>
-  <p>Next Gen Learning Platform</p>
-</div>
+<h1>MCQ Test</h1>
 
-<div id="batches">
-  <h1>OZME Batches</h1>
-  <input id="searchBar" placeholder="🔍 Search batches">
+<button onclick="logout()">Logout</button>
 
-  <div id="favoritesSection" style="display:none">
-    <h2>⭐ Favorites</h2>
-    <div class="batch-container" id="favoritesContainer"></div>
-  </div>
+<div id="quiz">Loading...</div>
 
-  <div class="batch-container" id="allBatches"></div>
-</div>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-<!-- 🔥 FIREBASE DYNAMIC BATCH LOADER -->
-<script type="module">
-import { db } from "./firebase.js";
-import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+<script src="firebase.js"></script>
 
-const allBatches = document.getElementById("allBatches");
-
-onValue(ref(db,"batches"), snap => {
-  allBatches.innerHTML="";
-  const data = snap.val();
-  if(!data) return;
-
-  for(const id in data){
-    const b = data[id];
-    allBatches.innerHTML += `
-      <div class="batch-card" data-title="${b.batchName}">
-        <button class="fav-btn">⭐</button>
-        <img src="${b.image || 'https://via.placeholder.com/300'}">
-        <div class="content">
-          <h2>${b.batchName}</h2>
-          <p class="price">₹FREE</p>
-        </div>
-        <div class="footer">
-          <a href="verify.html?redirect=batch.html?batch=${id}">
-            Let's Study
-          </a>
-        </div>
-      </div>`;
-  }
-  initFavorites();
-});
-</script>
-
-<!-- 🟢 UI + SEARCH + FAVORITES -->
 <script>
-setTimeout(()=>{
-  logoOverlay.style.display="none";
-  batches.style.opacity=1;
-},4000);
+let questions = [];
+let current = 0;
+let score = 0;
 
-searchBar.addEventListener("input",()=>{
-  const v = searchBar.value.toLowerCase();
-  document.querySelectorAll(".batch-card").forEach(c=>{
-    c.style.display = c.dataset.title.toLowerCase().includes(v)?"block":"none";
-  });
+// 🔐 Access Control (login check)
+firebase.auth().onAuthStateChanged(function(user) {
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    loadQuestions(); // login hai toh questions load karo
+  }
 });
 
-function initFavorites(){
-  const favSec = document.getElementById("favoritesSection");
-  const favCon = document.getElementById("favoritesContainer");
-  const cards = document.querySelectorAll(".batch-card");
-  let favs = JSON.parse(localStorage.getItem("favs"))||[];
+// 📥 Fetch questions from Firebase
+function loadQuestions() {
+  db.collection("questions").get().then(snapshot => {
+    questions = [];
+    snapshot.forEach(doc => {
+      questions.push(doc.data());
+    });
 
-  favCon.innerHTML="";
-  cards.forEach(c=>{
-    const btn=c.querySelector(".fav-btn");
-    const t=c.dataset.title;
-
-    if(favs.includes(t)){ btn.classList.add("active"); btn.textContent="❤️"; }
-
-    btn.onclick=()=>{
-      if(favs.includes(t)){
-        favs=favs.filter(x=>x!==t);
-        btn.classList.remove("active"); btn.textContent="⭐";
-      }else{
-        favs.push(t);
-        btn.classList.add("active"); btn.textContent="❤️";
-      }
-      localStorage.setItem("favs",JSON.stringify(favs));
-      initFavorites();
-    };
+    if (questions.length > 0) {
+      loadQuestion();
+    } else {
+      document.getElementById("quiz").innerText = "No questions found!";
+    }
   });
+}
 
-  favs.forEach(t=>{
-    const c=[...cards].find(x=>x.dataset.title===t);
-    if(c) favCon.appendChild(c.cloneNode(true));
+// 📊 Show question
+function loadQuestion() {
+  const q = questions[current];
+  document.getElementById("quiz").innerHTML = `
+    <h3>${q.question}</h3>
+    ${q.options.map(opt =>
+      `<button onclick="checkAnswer('${opt}')">${opt}</button>`
+    ).join("<br><br>")}
+  `;
+}
+
+// ✅ Check answer
+function checkAnswer(opt) {
+  if (opt === questions[current].answer) {
+    score++;
+  }
+
+  current++;
+
+  if (current < questions.length) {
+    loadQuestion();
+  } else {
+    document.getElementById("quiz").innerHTML =
+      `<h2>Score: ${score}/${questions.length}</h2>`;
+  }
+}
+
+// 🚪 Logout
+function logout() {
+  firebase.auth().signOut().then(() => {
+    window.location.href = "login.html";
   });
-  favSec.style.display = favs.length?"block":"none";
 }
 </script>
 
