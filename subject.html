@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chapters</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 30px;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .back {
+      cursor: pointer;
+      color: #4facfe;
+    }
+
+    .container {
+      padding: 20px 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 25px;
+      text-align: center;
+      border: 1px solid #334155;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #4facfe;
+    }
+
+    .btn {
+      margin-top: 10px;
+      display: inline-block;
+      padding: 8px 14px;
+      background: #4facfe;
+      border-radius: 6px;
+      text-decoration: none;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="logo">Chapters</div>
+  <div class="back" onclick="goBack()">← Back</div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+  <h2 id="title">Loading...</h2>
+  <div class="grid" id="chapters"></div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script src="firebase.js"></script>
+
+<script>
+
+// 🔐 Login check
+firebase.auth().onAuthStateChanged(function(user) {
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    loadChapters();
+  }
+});
+
+// 🔍 GET subjectId from URL
+const params = new URLSearchParams(window.location.search);
+const subjectId = params.get("subjectId");
+
+// 🚀 Load chapters
+function loadChapters() {
+
+  // Subject name load
+  db.collection("subjects").doc(subjectId).get().then(doc => {
+    document.getElementById("title").innerText = doc.data().name.toUpperCase();
+  });
+
+  // Chapters load
+  db.collection("chapters")
+    .where("subjectId", "==", subjectId)
+    .get()
+    .then(snapshot => {
+
+      let html = "";
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+
+        html += `
+          <div class="card">
+            <h3>${data.name}</h3>
+            <a class="btn" href="chapter.html?chapterId=${doc.id}">
+              Open
+            </a>
+          </div>
+        `;
+      });
+
+      document.getElementById("chapters").innerHTML = html;
+    });
+
+}
+
+// 🔙 Back
+function goBack() {
+  window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>
