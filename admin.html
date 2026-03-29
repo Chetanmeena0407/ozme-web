@@ -1,185 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>OZME Admin Panel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background:#0f111a;
-  color:#fff;
-  margin:0;
-  padding:20px;
-}
-h1,h2 { text-align:center; }
-.card {
-  background:#1c1f2b;
-  padding:20px;
-  border-radius:12px;
-  margin:20px auto;
-  max-width:500px;
-}
-input, button {
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  border:none;
-}
-input {
-  background:#0f111a;
-  color:#fff;
-  border:1px solid #333;
-}
-button {
-  background:#6c63ff;
-  color:#fff;
-  font-weight:bold;
-  cursor:pointer;
-}
-button:hover { background:#4e46d3; }
-.hidden { display:none; }
-</style>
+  <title>Admin Panel</title>
 </head>
-
 <body>
 
-<h1>OZME Admin Panel</h1>
+<h2>Add Chapter</h2>
+<input id="chapterName" placeholder="Chapter Name">
+<button onclick="addChapter()">Add Chapter</button>
 
-<!-- 🔐 LOGIN -->
-<div class="card" id="loginBox">
-  <h2>Admin Login</h2>
-  <input id="email" placeholder="Admin Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
+<h2>Add Type</h2>
+<input id="typeName" placeholder="Type (PYQ/NCERT)">
+<input id="chapterId" placeholder="Chapter ID">
+<button onclick="addType()">Add Type</button>
 
-<!-- 🔧 ADMIN CONTROLS -->
-<div id="adminBox" class="hidden">
+<h2>Add Question</h2>
+<input id="question" placeholder="Question"><br>
+<input id="opt1" placeholder="Option 1"><br>
+<input id="opt2" placeholder="Option 2"><br>
+<input id="opt3" placeholder="Option 3"><br>
+<input id="opt4" placeholder="Option 4"><br>
+<input id="answer" placeholder="Correct Answer"><br>
+<input id="image" placeholder="Image URL"><br>
+<input id="typeId" placeholder="Type ID"><br>
 
-  <div class="card">
-    <h2>Add Batch</h2>
-    <input id="bid" placeholder="Batch ID (batch1)">
-    <input id="bname" placeholder="Batch Name">
-    <input id="bimg" placeholder="Image URL (optional)">
-    <button onclick="addBatch()">Add Batch</button>
-  </div>
+<button onclick="addQuestion()">Add Question</button>
 
-  <div class="card">
-    <h2>Add Subject</h2>
-    <input id="sbatch" placeholder="Batch ID">
-    <input id="sid" placeholder="Subject ID">
-    <input id="sname" placeholder="Subject Name">
-    <button onclick="addSubject()">Add Subject</button>
-  </div>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="firebase.js"></script>
 
-  <div class="card">
-    <h2>Add Chapter</h2>
-    <input id="cbatch" placeholder="Batch ID">
-    <input id="csubject" placeholder="Subject ID">
-    <input id="cid" placeholder="Chapter ID">
-    <input id="cname" placeholder="Chapter Name">
-    <button onclick="addChapter()">Add Chapter</button>
-  </div>
+<script>
 
-  <div class="card">
-    <h2>Add Lecture</h2>
-    <input id="lbatch" placeholder="Batch ID">
-    <input id="lsubject" placeholder="Subject ID">
-    <input id="lchapter" placeholder="Chapter ID">
-    <input id="ltitle" placeholder="Lecture Title">
-    <input id="llec" placeholder="Lecture Link">
-    <input id="lnotes" placeholder="Notes Link">
-    <input id="ldpp" placeholder="DPP Link">
-    <button onclick="addLecture()">Add Lecture</button>
-  </div>
-
-</div>
-
-<!-- 🔥 FIREBASE + LOGIN LOGIC (FIXED FOR VERCEL) -->
-<script type="module">
-import { auth, db } from "./firebase.js";
-import {
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-import {
-  ref, get, set, push
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
-
-/* 🔹 MANUAL DOM SELECT (CRITICAL FIX) */
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const loginBox = document.getElementById("loginBox");
-const adminBox = document.getElementById("adminBox");
-
-/* 🔐 LOGIN */
-window.login = async () => {
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value.trim(),
-      passwordInput.value.trim()
-    );
-  } catch (err) {
-    alert("Login Error ❌ : " + err.message);
-  }
-};
-
-/* 🔐 ADMIN WHITELIST CHECK */
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-
-  const safeEmail = user.email.replace(/\./g, "_");
-  const snap = await get(ref(db, "admins/" + safeEmail));
-
-  if (snap.exists()) {
-    loginBox.style.display = "none";
-    adminBox.classList.remove("hidden");
-  } else {
-    alert("Access Denied ❌ You are not admin");
-    await signOut(auth);
-  }
-});
-
-/* ➕ ADD DATA FUNCTIONS */
-window.addBatch = async () => {
-  await set(ref(db, "batches/" + bid.value), {
-    batchName: bname.value,
-    image: bimg.value || ""
+function addChapter() {
+  db.collection("chapters").add({
+    subject: "botany",
+    name: chapterName.value
   });
-  alert("Batch Added ✅");
-};
+}
 
-window.addSubject = async () => {
-  await set(ref(db, `subjects/${sbatch.value}/${sid.value}`), {
-    subjectName: sname.value
+function addType() {
+  db.collection("types").add({
+    chapterId: chapterId.value,
+    name: typeName.value
   });
-  alert("Subject Added ✅");
-};
+}
 
-window.addChapter = async () => {
-  await set(ref(db, `chapters/${cbatch.value}/${csubject.value}/${cid.value}`), {
-    chapterName: cname.value
+function addQuestion() {
+  db.collection("questions").add({
+    question: question.value,
+    options: [opt1.value, opt2.value, opt3.value, opt4.value],
+    answer: answer.value,
+    image: image.value,
+    typeId: typeId.value
   });
-  alert("Chapter Added ✅");
-};
+}
 
-window.addLecture = async () => {
-  await push(ref(db,
-    `lectures/${lbatch.value}/${lsubject.value}/${lchapter.value}`
-  ), {
-    title: ltitle.value,
-    lectureLink: llec.value,
-    notesLink: lnotes.value,
-    dppLink: ldpp.value,
-    time: Date.now()
-  });
-  alert("Lecture Added ✅");
-};
 </script>
 
 </body>
