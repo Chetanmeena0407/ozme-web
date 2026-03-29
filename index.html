@@ -1,15 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MCQ Test</title>
+  <title>MCQ App</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #4facfe;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>MCQ Test</h1>
+<h2>MCQ Dashboard</h2>
 
 <button onclick="logout()">Logout</button>
 
-<div id="quiz">Loading...</div>
+<div class="card">
+  <h3 id="userEmail">Loading...</h3>
+  <p>Progress: <span id="progress">0</span>/100</p>
+</div>
+
+<div class="card">
+  <button onclick="startTest()">Start MCQ</button>
+</div>
+
+<div id="quiz" class="card"></div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -21,57 +58,93 @@
 <script>
 let questions = [];
 let current = 0;
-let score = 0;
 
-// 🔐 Access Control (login check)
+// 🔐 Login check
 firebase.auth().onAuthStateChanged(function(user) {
   if (!user) {
     window.location.href = "login.html";
   } else {
-    loadQuestions(); // login hai toh questions load karo
+    document.getElementById("userEmail").innerText = user.email;
+    loadProgress();
   }
 });
 
-// 📥 Fetch questions from Firebase
-function loadQuestions() {
+// 📊 Progress load
+function loadProgress() {
+  let data = JSON.parse(localStorage.getItem("progress")) || {
+    date: new Date().toDateString(),
+    done: []
+  };
+
+  let today = new Date().toDateString();
+
+  if (data.date !== today) {
+    data = { date: today, done: [] };
+    localStorage.setItem("progress", JSON.stringify(data));
+  }
+
+  document.getElementById("progress").innerText = data.done.length;
+}
+
+// 🚀 Start test
+function startTest() {
   db.collection("questions").get().then(snapshot => {
     questions = [];
     snapshot.forEach(doc => {
       questions.push(doc.data());
     });
 
-    if (questions.length > 0) {
-      loadQuestion();
-    } else {
-      document.getElementById("quiz").innerText = "No questions found!";
-    }
+    current = 0;
+    showQuestion();
   });
 }
 
-// 📊 Show question
-function loadQuestion() {
-  const q = questions[current];
+// 📚 Show question
+function showQuestion() {
+  let q = questions[current];
+
   document.getElementById("quiz").innerHTML = `
     <h3>${q.question}</h3>
     ${q.options.map(opt =>
-      `<button onclick="checkAnswer('${opt}')">${opt}</button>`
+      `<button onclick="answer('${opt}')">${opt}</button>`
     ).join("<br><br>")}
   `;
 }
 
-// ✅ Check answer
-function checkAnswer(opt) {
-  if (opt === questions[current].answer) {
-    score++;
+// 🔥 Progress update
+function updateProgress(index) {
+  let data = JSON.parse(localStorage.getItem("progress")) || {
+    date: new Date().toDateString(),
+    done: []
+  };
+
+  let today = new Date().toDateString();
+
+  if (data.date !== today) {
+    data = { date: today, done: [] };
   }
+
+  if (data.done.includes(index)) {
+    data.done = []; // repeat → reset
+  } else {
+    data.done.push(index);
+  }
+
+  localStorage.setItem("progress", JSON.stringify(data));
+}
+
+// ✅ Answer
+function answer(opt) {
+  updateProgress(current);
+  loadProgress();
 
   current++;
 
   if (current < questions.length) {
-    loadQuestion();
+    showQuestion();
   } else {
     document.getElementById("quiz").innerHTML =
-      `<h2>Score: ${score}/${questions.length}</h2>`;
+      "<h2>Test Finished ✅</h2>";
   }
 }
 
