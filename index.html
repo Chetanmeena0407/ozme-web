@@ -88,7 +88,6 @@
     .btn:hover {
       background: #007bff;
     }
-
   </style>
 </head>
 
@@ -102,52 +101,53 @@
 
 <!-- MAIN -->
 <div class="container">
-
   <h2>Select Subject</h2>
 
-  <div class="grid">
-
-    <div class="card">
-      <h3>Physics</h3>
-      <p>Practice Physics MCQs</p>
-      <a class="btn" href="physics.html">Let's Practice</a>
-    </div>
-
-    <div class="card">
-      <h3>Chemistry</h3>
-      <p>Practice Chemistry MCQs</p>
-      <a class="btn" href="chemistry.html">Let's Practice</a>
-    </div>
-
-    <div class="card">
-      <h3>Botany</h3>
-      <p>Practice Botany MCQs</p>
-      <a class="btn" href="botany.html">Let's Practice</a>
-    </div>
-
-    <div class="card">
-      <h3>Zoology</h3>
-      <p>Practice Zoology MCQs</p>
-      <a class="btn" href="zoology.html">Let's Practice</a>
-    </div>
-
-  </div>
-
+  <!-- 🔥 Dynamic subjects -->
+  <div class="grid" id="subjects"></div>
 </div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script src="firebase.js"></script>
 
 <script>
+
 // 🔐 LOGIN CHECK
 firebase.auth().onAuthStateChanged(function(user) {
   if (!user) {
     window.location.href = "login.html";
+  } else {
+    loadSubjects();
   }
 });
+
+// 🚀 LOAD SUBJECTS FROM FIREBASE
+function loadSubjects() {
+  db.collection("subjects").get().then(snapshot => {
+
+    let html = "";
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+
+      html += `
+        <div class="card">
+          <h3>${data.name.toUpperCase()}</h3>
+          <p>Practice ${data.name} MCQs</p>
+          <a class="btn" href="subject.html?subjectId=${doc.id}">
+            Let's Practice
+          </a>
+        </div>
+      `;
+    });
+
+    document.getElementById("subjects").innerHTML = html;
+  });
+}
 
 // 🚪 LOGOUT
 function logout() {
@@ -155,6 +155,7 @@ function logout() {
     window.location.href = "login.html";
   });
 }
+
 </script>
 
 </body>
