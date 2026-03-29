@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MCQ Dashboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 30px;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .logout {
+      background: #22c55e;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* MAIN */
+    .container {
+      padding: 20px 30px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 20px;
+    }
+
+    /* CARD */
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 25px;
+      text-align: center;
+      transition: 0.2s;
+      border: 1px solid #334155;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #4facfe;
+    }
+
+    .card h3 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .btn {
+      margin-top: 15px;
+      display: inline-block;
+      padding: 8px 14px;
+      background: #4facfe;
+      border-radius: 6px;
+      text-decoration: none;
+      color: white;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #007bff;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="logo">MCQ Prep</div>
+  <div class="logout" onclick="logout()">Logout</div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <h2>Select Subject</h2>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>Physics</h3>
+      <p>Practice Physics MCQs</p>
+      <a class="btn" href="physics.html">Let's Practice</a>
+    </div>
+
+    <div class="card">
+      <h3>Chemistry</h3>
+      <p>Practice Chemistry MCQs</p>
+      <a class="btn" href="chemistry.html">Let's Practice</a>
+    </div>
+
+    <div class="card">
+      <h3>Botany</h3>
+      <p>Practice Botany MCQs</p>
+      <a class="btn" href="botany.html">Let's Practice</a>
+    </div>
+
+    <div class="card">
+      <h3>Zoology</h3>
+      <p>Practice Zoology MCQs</p>
+      <a class="btn" href="zoology.html">Let's Practice</a>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+<script src="firebase.js"></script>
+
+<script>
+// 🔐 LOGIN CHECK
+firebase.auth().onAuthStateChanged(function(user) {
+  if (!user) {
+    window.location.href = "login.html";
+  }
+});
+
+// 🚪 LOGOUT
+function logout() {
+  firebase.auth().signOut().then(() => {
+    window.location.href = "login.html";
+  });
+}
+</script>
+
+</body>
+</html>
